@@ -1,0 +1,57 @@
+- name: Create Azure VM
+  hosts: localhost
+  connection: local
+  tasks:
+  - name: Create resource group
+    azure_rm_resourcegroup:
+      name: proj1-rg
+      location: West US 3
+  - name: Create virtual network
+    azure_rm_virtualnetwork:
+      resource_group: proj1-rg
+      name: proj1-vnet
+      address_prefixes: "10.0.0.0/16"
+  - name: Create public IP address
+    azure_rm_publicipaddress:
+      resource_group: proj1-rg
+      allocation_method: Static
+      name: myPublicIP
+    register: output_ip_address
+  - name: Public IP of VM
+    debug:
+      msg: "The public IP is {{ output_ip_address.state.ip_address }}."
+  - name: Create Network Security Group that allows SSH
+    azure_rm_securitygroup:
+      resource_group: proj1-rg
+      name: myNetworkSecurityGroup
+      rules:
+        - name: SSH
+          protocol: Tcp
+          destination_port_range: 22
+          access: Allow
+          priority: 1001
+          direction: Inbound
+  - name: Create virtual network interface card
+    azure_rm_networkinterface:
+      resource_group: proj1-rg
+      name: myNIC
+      virtual_network: proj1-vnet
+      subnet: subnet1
+      public_ip_name: myPublicIP
+      security_group: subnet1-nsg
+  - name: Create VM
+    azure_rm_virtualmachine:
+      resource_group: proj1-rg
+      name: myVM
+      vm_size: Standard_DS1_v2
+      admin_username: Shamu
+      ssh_password_enabled: false
+      ssh_public_keys:
+        - path: /home/Shamu/.ssh/authorized_keys
+          key_data: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDDwE1UMRe2sEWSwXpGwbUvgwdtjPxNkB+tNQHJdlEQvZS9EXswX2CvYznDjIi2ZisZJOKeEGywmaN6SOB4AzNqeXzdk3icy0qKUiWE8fJO4chGLE1V3dZZUlSzAsuBlgxlnl6/V44/lHK4qQ+lGZH7Mr/OYqhg5NnQcz1jvgSAwmFqrX+PNYrwkd3jrR+o4QAV8GlO57BMXLskGvNhr0sh5CS4atsi+N40EGeP2Xo54qQ2kfrln3HRnCsGFs62UC2d06JUhyu4aMiSVecYE/Uau6LHPlZrFRdnKgvqL36N2CXpE1G03BBb1OdsKykZI/nSduItAgn8ctWakTPXyUe1 mahesh@Windows-VM"
+      network_interfaces: myNIC
+      image:
+        offer: CentOS
+        publisher: OpenLogic
+        sku: '7.5'
+        version: latest
