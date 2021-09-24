@@ -1,2 +1,10 @@
 FROM tomcat
-RUN echo "<h1>Sample image created using dockerfile</h1>" > /usr/share/nginx/html/index.html
+
+MAINTAINER richard
+
+RUN apt-get update && apt-get -y upgrade
+
+WORKDIR C:\Users\mahesh\workspace\MavenWebProject\target\MavenWebProject
+
+
+EXPOSE 8080
